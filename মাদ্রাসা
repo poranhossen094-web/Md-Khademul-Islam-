@@ -1,0 +1,55 @@
+import React, { useEffect, useState } from "react";
+
+function App() {
+  const [students, setStudents] = useState([]);
+  const [name, setName] = useState("");
+
+  const API = process.env.REACT_APP_API_URL || "";
+
+  useEffect(() => {
+    fetch(API + "/api/students")
+      .then(r => r.json())
+      .then(setStudents)
+      .catch(() => setStudents([]));
+  }, []);
+
+  const addStudent = async () => {
+    if (!name) return alert("নাম দিন");
+    const res = await fetch(API + "/api/students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, class: "৫ম" })
+    });
+    const data = await res.json();
+    alert(data.message || "সম্পন্ন");
+    // reload
+    const s = await fetch(API + "/api/students").then(r => r.json());
+    setStudents(s);
+    setName("");
+  };
+
+  return (
+    <div className="container">
+      <h1>🕌 আমার শিক্ষা — মাদ্রাসা ম্যানেজমেন্ট</h1>
+
+      <div className="card">
+        <h2>ছাত্র-ছাত্রী</h2>
+        <input placeholder="নাম লিখুন" value={name} onChange={e=>setName(e.target.value)} />
+        <button onClick={addStudent}>ছাত্র যোগ করুন</button>
+
+        <ul>
+          {students.map(s => (
+            <li key={s.id}>{s.name} — {s.class}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h2>দ্রুত লিংক</h2>
+        <p>আপনি এখানে লজিক বর্ধন করে শিক্ষক, বেতন, উপস্থিতি ইত্যাদি ম্যানেজ করতে পারবেন।</p>
+      </div>
+    </div>
+  );
+}
+
+export default App;
