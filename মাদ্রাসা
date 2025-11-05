@@ -1,55 +1,71 @@
-import React, { useEffect, useState } from "react";
-
-function App() {
-  const [students, setStudents] = useState([]);
-  const [name, setName] = useState("");
-
-  const API = process.env.REACT_APP_API_URL || "";
-
-  useEffect(() => {
-    fetch(API + "/api/students")
-      .then(r => r.json())
-      .then(setStudents)
-      .catch(() => setStudents([]));
-  }, []);
-
-  const addStudent = async () => {
-    if (!name) return alert("নাম দিন");
-    const res = await fetch(API + "/api/students", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, class: "৫ম" })
-    });
-    const data = await res.json();
-    alert(data.message || "সম্পন্ন");
-    // reload
-    const s = await fetch(API + "/api/students").then(r => r.json());
-    setStudents(s);
-    setName("");
-  };
-
-  return (
-    <div className="container">
-      <h1>🕌 আমার শিক্ষা — মাদ্রাসা ম্যানেজমেন্ট</h1>
-
-      <div className="card">
-        <h2>ছাত্র-ছাত্রী</h2>
-        <input placeholder="নাম লিখুন" value={name} onChange={e=>setName(e.target.value)} />
-        <button onClick={addStudent}>ছাত্র যোগ করুন</button>
-
-        <ul>
-          {students.map(s => (
-            <li key={s.id}>{s.name} — {s.class}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="card">
-        <h2>দ্রুত লিংক</h2>
-        <p>আপনি এখানে লজিক বর্ধন করে শিক্ষক, বেতন, উপস্থিতি ইত্যাদি ম্যানেজ করতে পারবেন।</p>
-      </div>
-    </div>
-  );
+generator client {
+  provider = "prisma-client-js"
 }
 
-export default App;
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("student")
+  createdAt DateTime @default(now())
+}
+
+model Student {
+  id         Int        @id @default(autoincrement())
+  name       String
+  class      String
+  section    String?
+  guardian   String?
+  address    String?
+  photoUrl   String?
+  createdAt  DateTime   @default(now())
+  fees       Fee[]
+  attendance Attendance[]
+  results    Result[]
+}
+
+model Teacher {
+  id        Int        @id @default(autoincrement())
+  name      String
+  subject   String?
+  salary    Float?
+  createdAt DateTime   @default(now())
+  attendance Attendance[]
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  student    Student? @relation(fields: [studentId], references: [id])
+  studentId  Int?
+  teacher    Teacher? @relation(fields: [teacherId], references: [id])
+  teacherId  Int?
+  status     String
+  date       DateTime @default(now())
+}
+
+model Fee {
+  id        Int      @id @default(autoincrement())
+  student   Student  @relation(fields: [studentId], references: [id])
+  studentId Int
+  month     String
+  amount    Float
+  paid      Boolean  @default(false)
+  paidAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Result {
+  id        Int      @id @default(autoincrement())
+  student   Student  @relation(fields: [studentId], references: [id])
+  studentId Int
+  subject   String
+  marks     Float
+  total     Float
+  createdAt DateTime @default(now())
+}
